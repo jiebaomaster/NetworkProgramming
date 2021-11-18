@@ -2,12 +2,17 @@
 #define _JMUDUO_EVENTLOOP_H_
 
 #include <sys/types.h>
+#include <memory>
+#include <vector>
 
 #include "../base/noncopyable.h"
 #include "../base/thread/Thread.h"
 
 namespace jmuduo
 {
+
+class Channel;
+class Poller;
 
 /**
  * 事件循环
@@ -19,8 +24,12 @@ class EventLoop : noncopyable {
   EventLoop();
   ~EventLoop();
 
-  // 开始事件循环
+  // 开始事件循环，只能在事件循环所属线程调用
   void loop();
+  // 结束事件循环
+  void quit();
+
+  void updateChannel(Channel*);
 
   // 包装线程判断
   void assertInLoopThread() {
@@ -45,7 +54,11 @@ private:
   void abortNotInLoopThread();
 
   bool looping_; /* atomic，当前事件循环是否正在运行 */
+  bool quit_;
   const pid_t threadId_; // 本事件循环所属的线程 id
+  const std::unique_ptr<Poller> poller_; // 本事件循环依赖的 IO复用 对象
+  // 本轮事件循环返回的需要处理的事件，因为该变量只被事件循环所属线程操作，故不需要加锁
+  std::vector<Channel*> activeChannels_;
 };
 
 } // namespace mudu

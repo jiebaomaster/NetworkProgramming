@@ -1,12 +1,3 @@
-/**
- * @file 00_basic_thread&loop.cpp
- * @author your name (you@domain.com)
- * @brief 
- * @version 0.1
- * @date 2021-11-16
- * 
- * g++ -phtread 
- */
 #include "../base/thread/Thread.h"
 #include "../reactor/EventLoop.h"
 

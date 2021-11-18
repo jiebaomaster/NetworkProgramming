@@ -2,7 +2,7 @@ CXXFLAGS = -O0 -g  -Wall -I ./base -pthread
 LDFLAGS = -lpthread
 
 BASE_SRC = ./base/thread/Thread.cc 
-LIB_SRC = ./reactor/EventLoop.cc
+LIB_SRC = ./reactor/EventLoop.cc ./reactor/Channel.cc ./reactor/Poller.cc
 LIBS =
 TESTS = $(shell find ./test -name "*.cc")
 TESTS_OBJ = $(patsubst %.cc, %, $(TESTS)) 
