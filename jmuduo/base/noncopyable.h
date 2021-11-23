@@ -18,6 +18,12 @@ class noncopyable {
   ~noncopyable() = default;
 };
 
+/**
+ * @brief 空基类，强调其子类是可复制的
+ * 任何可复制的派生类都应该是值类型
+ */
+class copyable {};
+
 }  // namespace muduo
 
 #endif

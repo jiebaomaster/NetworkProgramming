@@ -15,8 +15,9 @@ Poller::Poller(EventLoop* ownerLooper) : ownerLoop_(ownerLooper) {}
 
 Poller::~Poller() {}
 
-int Poller::poll(int timeoutMs, ChannelList* activeChannels) {
+Timestamp Poller::poll(int timeoutMs, ChannelList* activeChannels) {
   int numEvents = ::poll(&(pollfds_[0]), pollfds_.size(), timeoutMs);
+  Timestamp now(Timestamp::now());
   if (numEvents > 0) {  // 如果有事件发生
     cout << numEvents << " events happened" << endl;
     // 收集所有有事件处理的信道
@@ -26,7 +27,7 @@ int Poller::poll(int timeoutMs, ChannelList* activeChannels) {
   else
     cout << "ERR Poller::poll()" << endl;
 
-  return 0;
+  return now;
 }
 
 /**

@@ -6,6 +6,7 @@
 
 #include "EventLoop.h"
 #include "noncopyable.h"
+#include "../base/datetime/Timestamp.h"
 
 struct pollfd;
 
@@ -32,7 +33,7 @@ class Poller : noncopyable {
    * @param activeChannels 事件循环返回时有事件发生的信道
    * @return int 返回的时间
    */
-  int poll(int timeoutMs, ChannelList* activeChannels);
+  Timestamp poll(int timeoutMs, ChannelList* activeChannels);
 
   // 改变一个信道关心的事件，必须在事件循环线程调用
   void updateChannel(Channel*);

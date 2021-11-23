@@ -1,6 +1,7 @@
 #include "EventLoop.h"
 #include "Channel.h"
 #include "Poller.h"
+#include "TimerQueue.h"
 
 #include <assert.h>
 #include <iostream>
@@ -19,7 +20,8 @@ EventLoop::EventLoop()
   : looping_(false), 
     quit_(false),
     threadId_(CurrentThread::tid()),
-    poller_(new Poller(this)) {
+    poller_(new Poller(this)),
+    timerQueue_(new TimerQueue(this)) {
   std::cout << "EventLoop created " << this << " in thread " << threadId_
             << std::endl;
 
@@ -43,7 +45,7 @@ void EventLoop::loop() {
 
   while (!quit_)  {
     activeChannels_.clear(); // 每一轮事件循环前清空活动信道列表
-    poller_->poll(kPollTimeMs, &activeChannels_); // 等待事件到来
+    pollReturnTime_ = poller_->poll(kPollTimeMs, &activeChannels_); // 等待事件到来
     for(auto it : activeChannels_) // 遍历处理每一个活动信道的事件
       it->handleEvent();
   }
@@ -57,6 +59,20 @@ void EventLoop::quit() {
   quit_ = true;
   // TODO 退出事件循环的方式为设置标志位，起码要等到本轮事件循环结束才生效，
   // 可以优化为通过某种方式（如 eventfd）及时唤醒 poll
+}
+
+TimerId EventLoop::runAt(const Timestamp time, const TimerCallback& cb) {
+  return timerQueue_->addTimer(cb, time, 0.0);
+}
+
+TimerId EventLoop::runAfter(double delay, const TimerCallback& cb) {
+  Timestamp time(addTime(Timestamp::now(), delay));
+  return runAt(time, cb);
+}
+
+TimerId EventLoop::runEvery(double interval, const TimerCallback& cb) {
+  Timestamp time(addTime(Timestamp::now(), interval));
+  return timerQueue_->addTimer(cb, time, interval);
 }
 
 void EventLoop::abortNotInLoopThread() {

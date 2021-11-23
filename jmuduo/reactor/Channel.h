@@ -67,7 +67,7 @@ class Channel : noncopyable {
   static const int kWriteEvent;
 
   EventLoop* loop_; // 每个 Channel 对象都属于某个线程的 EventLoop
-  const int fd_; // 每个 Channel 负责一个 fd 的事件分发
+  const int fd_; // 每个 Channel 负责一个 fd 的事件分发，注意该对象不拥有文件描述符
   int events_; // 监听的事件
   int revents_; // 一次事件循环中返回的事件
   int index_;  // channel 在使用它的 poller 的 channels_ 中的索引
