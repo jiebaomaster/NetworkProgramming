@@ -46,6 +46,8 @@ class TimerQueue : noncopyable {
   using Entry = std::pair<Timestamp, Timer*>;
   using TimerList = std::set<Entry>;
 
+  // 在 IO 线程中回调的定时器添加函数
+  void addTimerInLoop(Timer* timer);
   // 处理 timerfd 到期事件
   void handleRead();
   // 从定时器队列中取下所有到期的定时器

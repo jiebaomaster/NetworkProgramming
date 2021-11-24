@@ -115,12 +115,17 @@ TimerQueue::~TimerQueue() {
 TimerId TimerQueue::addTimer(const TimerCallback& cb, Timestamp t,
                              double interval) {
   Timer* ptimer = new Timer(cb, t, interval);
+  // 在 IO 线程中进行定时器添加
+  loop_->runInLoop(std::bind(&TimerQueue::addTimerInLoop, this, ptimer));
+  return TimerId(ptimer);
+}
+
+void TimerQueue::addTimerInLoop(Timer *ptimer) {
+  // 由于定时器队列没有用锁保护，所以添加定时器只能在 IO 线程执行
   loop_->assertInLoopThread();
   bool earliestChanged = insert(ptimer);
   if (earliestChanged) // 如果新加入的定时器是最早的，需要重设 timerfd
-    resetTimerfd(timerfd_, Timestamp::now());
-
-  return TimerId(ptimer);
+    resetTimerfd(timerfd_, ptimer->expiration());
 }
 
 void TimerQueue::handleRead() {
