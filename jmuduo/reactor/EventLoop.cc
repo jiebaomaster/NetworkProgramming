@@ -2,9 +2,9 @@
 #include "Channel.h"
 #include "Poller.h"
 #include "TimerQueue.h"
+#include "../base/logging/Logging.h"
 
 #include <assert.h>
-#include <iostream>
 #include <sys/eventfd.h>
 #include <unistd.h>
 
@@ -24,7 +24,7 @@ EventLoop* EventLoop::getEventLoopOfCurrentThread() {
 static int createEventfd() {
   int eventfd = ::eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
   if(eventfd < 0) {
-    std::cout << "Failed in eventfd" << std::endl;
+    LOG_SYSERR << "Failed in eventfd";
     abort();
   }
   return eventfd;
@@ -39,12 +39,11 @@ EventLoop::EventLoop()
     timerQueue_(new TimerQueue(this)),
     wakeupFd_(createEventfd()),
     wakeupChannel_(new Channel(this, wakeupFd_)) {
-  std::cout << "EventLoop created " << this << " in thread " << threadId_
-            << std::endl;
+  LOG_TRACE << "EventLoop created " << this << " in thread " << threadId_;
 
   if (t_loopInThisThread) { // 一个线程下只能有一个事件循环
-    std::cout << "Another EventLoop " << t_loopInThisThread
-              << " exists in this thread " << threadId_ << std::endl;
+    LOG_FATAL << "Another EventLoop " << t_loopInThisThread
+              << " exists in this thread " << threadId_;
   } else
     t_loopInThisThread = this;
 
@@ -75,8 +74,7 @@ void EventLoop::loop() {
     doPendingFunctors(); 
   }
 
-  std::cout << "EventLoop " << this << " stop looping" << std::endl;
-
+  LOG_TRACE << "EventLoop " << this << " stop looping";
   looping_ = false;
 }
 
@@ -132,9 +130,9 @@ TimerId EventLoop::runEvery(double interval, const TimerCallback& cb) {
 }
 
 void EventLoop::abortNotInLoopThread() {
-  std::cout << "EventLoop::abortNotInLoopThread - EventLoop " << this
+  LOG_FATAL << "EventLoop::abortNotInLoopThread - EventLoop " << this
             << " was created in threadId_ = " << threadId_
-            << ", current thread id = " << CurrentThread::tid() << std::endl;
+            << ", current thread id = " << CurrentThread::tid();
 }
 
 void EventLoop::updateChannel(Channel* channel) {
@@ -145,9 +143,9 @@ void EventLoop::wakeup() {
   uint64_t one = 1;
   // 唤醒阻塞的事件循环只需要往 eventfd 写入，事件循环会监听到 fd 的可读事件
   ssize_t n = ::write(wakeupFd_, &one, sizeof one);
-  if(n != sizeof one)
-    std::cout << "EventLoop::wakeup() writes " << n << " bytes instead of 8"
-              << std::endl;
+  if(n != sizeof one) {
+    LOG_ERROR << "EventLoop::wakeup() writes " << n << " bytes instead of 8";
+  }
 }
 
 /**
@@ -165,9 +163,9 @@ void EventLoop::handleRead() {
   uint64_t one = 1; // eventfd 的可读缓冲区只有 8B
   // 处理可读事件
   ssize_t n = ::read(wakeupFd_, &one, sizeof one);
-  if (n != sizeof one)
-    std::cout << "EventLoop::handleRead() reads " << n << " bytes instead of 8"
-              << std::endl;
+  if (n != sizeof one) {
+    LOG_ERROR << "EventLoop::handleRead() reads " << n << " bytes instead of 8";
+  }
 }
 
 void EventLoop::doPendingFunctors() {

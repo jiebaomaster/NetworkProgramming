@@ -1,9 +1,9 @@
 #define _GNU_SOURCE 1
 #include "Channel.h"
 #include "EventLoop.h"
+#include "../base/logging/Logging.h"
 
 #include <sys/poll.h>
-#include <iostream>
 
 using namespace jmuduo;
 
@@ -19,8 +19,9 @@ void Channel::update() {
 }
 
 void Channel::handleEvent() {
-  if (revents_ & POLLNVAL)
-    std::cout << "Channel::handle_event() POLLNVAL" << std::endl;
+  if (revents_ & POLLNVAL) {
+    LOG_WARN << "Channel::handle_event() POLLNVAL";
+  }
 
   // 有错误事件，调用错误处理
   if (revents_ & (POLLNVAL | POLLERR))

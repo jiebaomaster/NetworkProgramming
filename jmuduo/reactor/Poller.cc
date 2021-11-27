@@ -1,15 +1,11 @@
 #include "Poller.h"
 #include "Channel.h"
+#include "../base/logging/Logging.h"
 
 #include <assert.h>
 #include <sys/poll.h>
 
-#include <iostream>
-
-
 using namespace jmuduo;
-using std::cout;
-using std::endl;
 
 Poller::Poller(EventLoop* ownerLooper) : ownerLoop_(ownerLooper) {}
 
@@ -19,13 +15,14 @@ Timestamp Poller::poll(int timeoutMs, ChannelList* activeChannels) {
   int numEvents = ::poll(&(pollfds_[0]), pollfds_.size(), timeoutMs);
   Timestamp now(Timestamp::now());
   if (numEvents > 0) {  // 如果有事件发生
-    cout << numEvents << " events happened" << endl;
+    LOG_TRACE << numEvents << " events happened";
     // 收集所有有事件处理的信道
     fillActiveChannels(numEvents, activeChannels);
-  } else if (numEvents == 0)
-    cout << "nothing happned" << endl;
-  else
-    cout << "ERR Poller::poll()" << endl;
+  } else if (numEvents == 0) {
+    LOG_TRACE << "nothing happned";
+  } else {
+    LOG_SYSERR << "ERR Poller::poll()";
+  }
 
   return now;
 }
@@ -59,7 +56,7 @@ void Poller::fillActiveChannels(int numEvents,
 
 void Poller::updateChannel(Channel* channel) {
   assertInLoopThread();
-  cout << "fd = " << channel->fd() << " events = " << channel->events() << endl;
+  LOG_TRACE << "fd = " << channel->fd() << " events = " << channel->events();
   if (channel->index() < 0) {
     /* 一个新的信道，新建一个 pollfd 并添加到 pollfds_ 中*/
     assert(channels_.find(channel->fd()) == channels_.end());

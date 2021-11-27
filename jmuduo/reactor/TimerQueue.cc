@@ -7,17 +7,14 @@
 #include <stdint.h>
 
 #include <functional>
-#include <iostream>
 
 #include "EventLoop.h"
 #include "Timer.h"
 #include "TimerId.h"
+#include "../base/logging/Logging.h"
 
 namespace jmuduo {
 namespace detail {
-
-using std::cout;
-using std::endl;
 
 /* 封装系统调用 timefd 相关系统调用 https://www.cnblogs.com/mickole/p/3261879.html */
 
@@ -28,7 +25,9 @@ using std::endl;
  */
 int create_timefd() {
   int timefd = ::timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK | TFD_CLOEXEC);
-  if (timefd < 0) cout << "Faild in timerfd_create" << endl;
+  if (timefd < 0) {
+    LOG_SYSFATAL << "Faild in timerfd_create";
+  }
 
   return timefd;
 }
@@ -63,11 +62,12 @@ void readTimerfd(int timerfd, Timestamp now) {
   uint64_t howmany;
   // 返回超时次数（从上次调用timerfd_settime()启动开始或上次read成功读取开始）
   ssize_t n = ::read(timerfd, &howmany, sizeof howmany);
-  cout << "TimerQueue::handleRead() " << howmany << " at " << now.toString()
-       << endl;
+  LOG_TRACE << "TimerQueue::handleRead() " << howmany << " at "
+            << now.toString();
 
-  if (n != sizeof howmany)
-    cout << "TimerQueue::handleRead() reads" << n << " bytes instead of 8";
+  if (n != sizeof howmany) {
+    LOG_ERROR << "TimerQueue::handleRead() reads" << n << " bytes instead of 8";
+  }
 }
 
 /**
@@ -84,8 +84,9 @@ void resetTimerfd(int timerfd, Timestamp expiration) {
   newValue.it_value = howMuchTimeFromNow(expiration);
   // 以相对当前时间的时间差参数设置定时器
   int ret = ::timerfd_settime(timerfd, 0, &newValue, &oldValue);
-  if (ret) // 设置成功
-    cout << "timerfd_settime()" << endl;
+  if (ret) { // 设置失败
+    LOG_SYSERR << "timerfd_settime()";
+  }
 }
 
 }  // namespace detail

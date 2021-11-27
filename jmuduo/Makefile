@@ -1,7 +1,7 @@
 CXXFLAGS = -O0 -g  -Wall -I ./base -pthread
 LDFLAGS = -lpthread
 
-BASE_SRC = ./base/thread/Thread.cc ./base/datetime/Timestamp.cc
+BASE_SRC = ./base/thread/Thread.cc ./base/datetime/Timestamp.cc ./base/logging/Logging.cc ./base/logging/LogStream.cc
 LIB_SRC = $(shell find ./reactor -name "*.cc")
 LIBS =
 TESTS = $(shell find ./test -name "*.cc")
