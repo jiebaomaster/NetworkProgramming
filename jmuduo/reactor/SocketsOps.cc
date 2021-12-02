@@ -131,3 +131,13 @@ void sockets::fromHostPort(const char* ip, uint16_t port,
     LOG_SYSERR << "sockets::fromHostPort";
   }
 }
+
+struct sockaddr_in sockets::getLocalAddr(int sockfd) {
+  struct sockaddr_in localaddr;
+  bzero(&localaddr, sizeof localaddr);
+  socklen_t addrlen = sizeof(localaddr);
+  if (::getsockname(sockfd, sockaddr_cast(&localaddr), &addrlen) < 0) {
+    LOG_SYSERR << "sockets::getLocalAddr";
+  }
+  return localaddr;
+}
