@@ -4,6 +4,9 @@
 
 #include <assert.h>
 #include <sys/poll.h>
+#include <assert.h>
+
+#include <algorithm>
 
 using namespace jmuduo;
 
@@ -70,15 +73,43 @@ void Poller::updateChannel(Channel* channel) {
   } else {
     /* 更新一个已存在的信道的 pollfd */
     assert(channels_.find(channel->fd()) != channels_.end());
-    assert(channels_[channel->index()] == channel);
+    assert(channels_[channel->fd()] == channel);
     int idx = channel->index();
     assert(idx >= 0 && idx < static_cast<int>(channels_.size()));
     struct pollfd& pollfd = pollfds_[idx];
-    assert(pollfd.fd == channel->fd() || pollfd.fd == -1);
+    assert(pollfd.fd == channel->fd() || pollfd.fd == -channel->fd()-1);
     pollfd.events = static_cast<short>(channel->events());
     pollfd.revents = 0;
-    if(channel->isNoneEvent()) // 忽略这个 pollfd
-      pollfd.fd = -1;
+    // 若该 channel 此时不监听任何事件，将 fd 设成负数表示忽略这个 pollfd
+    if(channel->isNoneEvent())
+      pollfd.fd = -channel->fd()-1;
   }
 }
 
+void Poller::removeChannel(Channel* channel) {
+  assertInLoopThread();
+  LOG_TRACE << "fd = " << channel->fd();
+  assert(channels_.find(channel->fd()) != channels_.end());
+  assert(channels_[channel->fd()] == channel);
+  assert(channel->isNoneEvent());
+  int idx = channel->index();
+  assert(0 <= idx && idx < static_cast<int>(pollfds_.size()));
+  const struct pollfd& pfd = pollfds_[idx]; // 待删除的 pollfd
+  assert(pfd.fd == -channel->fd()-1 && pfd.events == channel->events());
+  // 从 map 中移除
+  size_t n = channels_.erase(channel->fd());
+  assert(n == 1);
+  // 从 pollfds_ 中移除
+  if (static_cast<size_t>(idx) == pollfds_.size() - 1) {
+    // 最后一个，可以直接删除
+    pollfds_.pop_back();
+  } else { // 要删除的不是最后一个，先和最后一个交换，再删除最后一个
+    int channelAtEnd = pollfds_.back().fd;
+    std::iter_swap(pollfds_.begin() + idx, pollfds_.end() - 1);
+    if (channelAtEnd < 0) {
+      channelAtEnd = -channelAtEnd - 1;
+    }
+    channels_[channelAtEnd]->set_index(idx); // 更新被交换信道的 index
+    pollfds_.pop_back(); // 删除当前最后一个
+  }
+}

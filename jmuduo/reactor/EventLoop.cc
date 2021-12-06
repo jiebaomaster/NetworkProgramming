@@ -139,6 +139,10 @@ void EventLoop::updateChannel(Channel* channel) {
   poller_->updateChannel(channel);
 }
 
+void EventLoop::removeChannel(Channel* channel) {
+  poller_->removeChannel(channel);
+}
+
 void EventLoop::wakeup() {
   uint64_t one = 1;
   // 唤醒阻塞的事件循环只需要往 eventfd 写入，事件循环会监听到 fd 的可读事件

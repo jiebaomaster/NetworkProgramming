@@ -34,6 +34,8 @@ class TcpServer : noncopyable {
   // 该函数本身不是线程安全的，但是只会事件循环中运行
   // 供 Acceptor 回调，处理新连接的建立
   void newConnection(int sockfd, const InetAddress& peerAddr);
+  // 供 TcpConnection 回调，处理连接的删除
+  void removeConnection(const TcpConnectionPtr& conn);
 
   using ConnectionMap = std::map<std::string, TcpConnectionPtr>;
 
@@ -41,8 +43,9 @@ class TcpServer : noncopyable {
   const std::string name_;  // ip:port
   const std::unique_ptr<Acceptor> acceptor_; // 接收新连接的帮助对象
   ConnectionCallback
-      connectionCallback_;  // 供 TcpConnection 在每次有连接建立时调用
-  MessageCallback messageCallback_;  // 供 TcpConnection 在每次有消息可读时调用
+      connectionCallback_;  // 用户回调，供 TcpConnection 在每次有连接建立时调用
+  MessageCallback
+      messageCallback_;  // 用户回调，供 TcpConnection 在每次有消息可读时调用
   bool started_;                     // 服务是否启动
   int nextConnId_;  // 下一个连接 socket 的编号，单调递增
   ConnectionMap connections_;  // 所有 TCP 连接，连接名称 => TcpConnection

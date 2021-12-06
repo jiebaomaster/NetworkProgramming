@@ -29,6 +29,12 @@ using ConnectionCallback = std::function<void(const TcpConnectionPtr&)>;
  */
 using MessageCallback =
     std::function<void(const TcpConnectionPtr&, const char* data, ssize_t len)>;
+
+/**
+ * @brief 传递给 TcpServer，在 TCP socket 被关闭时调用
+ * @param TcpConnectionPtr 指向被关闭的 TCP 连接
+ */
+using CloseCallback = std::function<void (const TcpConnectionPtr&)>;
 }  // namespace jmuduo
 
 #endif

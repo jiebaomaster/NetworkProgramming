@@ -93,6 +93,9 @@ class Logger {
 #define LOG_SYSERR jmuduo::Logger(__FILE__, __LINE__, false).stream()
 #define LOG_SYSFATAL jmuduo::Logger(__FILE__, __LINE__, true).stream()
 
+// 根据系统调用返回的错误号 savedErrno 解析字符串形式的错误信息
+const char* strerror_tl(int savedErrno);
+
 // Taken from glog/logging.h
 //
 // Check that the input is non NULL.  This very useful in constructor
@@ -107,6 +110,14 @@ T* CheckNotNull(const char *file, int line, const char* names, T* ptr) {
     Logger(file, line, Logger::FATAL).stream() << names;
 
   return ptr;
+}
+
+
+// https://blog.csdn.net/xiaoc_fantasy/article/details/79570788
+// upcast 派生类=>基类
+template<typename To, typename From>
+inline To implicit_cat(From const &f) {
+  return f;
 }
 
 }  // namespace jmuduo

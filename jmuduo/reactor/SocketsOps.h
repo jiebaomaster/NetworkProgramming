@@ -41,8 +41,12 @@ void toHostPort(char* buf, size_t bufSize, const struct sockaddr_in& addr);
 // 将 ip port 拼接成将要使用的远端地址（网络字节序）
 void fromHostPort(const char* ip, uint16_t port, struct sockaddr_in* addr);
 
+/* 获取 socket 的相关信息 */
+
 // 获取 sockfd 绑定的地址
 struct sockaddr_in getLocalAddr(int sockfd);
+// 获取 sockfd 发生的错误
+int getSocketError(int sockfd);
 
 }  // namespace sockets
 

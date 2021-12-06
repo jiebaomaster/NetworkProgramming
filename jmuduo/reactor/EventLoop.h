@@ -81,8 +81,8 @@ class EventLoop : noncopyable {
   void wakeup();
   // 更新事件循环中某个信道监听的事件，只能在库内部使用
   void updateChannel(Channel*);
-  // TODO 支持删除某个信道
-  // void removeChannel(Channel*);
+  // 从事件循环中删除某个信道
+  void removeChannel(Channel*);
 
   // 包装线程判断
   void assertInLoopThread() {

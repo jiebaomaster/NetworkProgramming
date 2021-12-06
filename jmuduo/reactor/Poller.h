@@ -37,6 +37,8 @@ class Poller : noncopyable {
 
   // 改变一个信道关心的事件，必须在事件循环线程调用
   void updateChannel(Channel*);
+  // 信道对象析构前，从 poller 中移除对应的 pollfd，必须在事件循环线程调用
+  void removeChannel(Channel*);
   // 包装线程判断
   void assertInLoopThread() { ownerLoop_->assertInLoopThread(); };
 
