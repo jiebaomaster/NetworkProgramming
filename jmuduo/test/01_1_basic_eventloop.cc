@@ -10,13 +10,14 @@ using namespace jmuduo;
 
 EventLoop* g_loop;
 
-void timeout() {
-  printf("Timeout!\n");
+void timeout(Timestamp receiveTime) {
+  printf("%s Timeout!\n", receiveTime.toFormattedString().c_str());
   g_loop->quit(); // 时间到了就退出事件循环
 }
 
 
 int main() {
+  printf("%s started\n", Timestamp::now().toFormattedString().c_str());
   EventLoop loop;
   g_loop = &loop;
 

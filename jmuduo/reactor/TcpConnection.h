@@ -7,6 +7,7 @@
 #include "InetAddress.h"
 #include "Callbacks.h"
 #include "noncopyable.h"
+#include "Buffer.h"
 
 namespace jmuduo {
 
@@ -74,14 +75,14 @@ class TcpConnection : noncopyable, public std::enable_shared_from_this<TcpConnec
 
   void setState(StateE s) { state_ = s; }
   // channel 使用的事件回调
-  void handleRead();   // 处理连接可读事件
+  void handleRead(Timestamp receiveTime);   // 处理连接可读事件
   void handleWrite();  // 处理连接可写事件
   void handleClose();  // 处理连接断开事件
   void handleError();  // 处理连接错误事件
 
   EventLoop* loop_;
   std::string name_; // 连接名称，格式 ip:port#connIndex
-  StateE state_; // 该连接的状态
+  StateE state_; // FIXME: use atomic variable 该连接的状态
   const std::unique_ptr<Socket> socket_; // TCP socket
   const std::unique_ptr<Channel> channel_; // 监听读写的事件循环信道
   InetAddress localAddr_; // 本地监听地址
@@ -89,6 +90,7 @@ class TcpConnection : noncopyable, public std::enable_shared_from_this<TcpConnec
   ConnectionCallback connectionCallback_; // 建立该连接时和关闭该连接时的用户回调
   MessageCallback messageCallback_; // 该连接有消息可读时的用户回调
   CloseCallback closeCallback_; // 该连接被关闭时的回调，内部使用
+  Buffer inputBuffer_; // 用户读取缓冲区
 };
 
 }  // namespace jmuduo

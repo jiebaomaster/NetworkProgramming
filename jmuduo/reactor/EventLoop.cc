@@ -69,7 +69,7 @@ void EventLoop::loop() {
     activeChannels_.clear(); // 每一轮事件循环前清空活动信道列表
     pollReturnTime_ = poller_->poll(kPollTimeMs, &activeChannels_); // 等待事件到来
     for(auto it : activeChannels_) // 遍历处理每一个活动信道的事件
-      it->handleEvent();
+      it->handleEvent(pollReturnTime_);
 
     doPendingFunctors(); 
   }

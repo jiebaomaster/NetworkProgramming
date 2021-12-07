@@ -28,7 +28,7 @@ TcpConnection::TcpConnection(EventLoop* loop, const std::string& name,
   // channel_ 是 TcpConnection 的成员，所以 channel_ 执行 TcpConnection 注册的回调时
   // TcpConnection 必存在，所以不需要 shared_from_this
   // 注册消息回调          
-  channel_->setReadCallback(std::bind(&TcpConnection::handleRead, this));
+  channel_->setReadCallback(std::bind(&TcpConnection::handleRead, this, std::placeholders::_1));
   channel_->setWriteCallback(std::bind(&TcpConnection::handleWrite, this));
   channel_->setCloseCallback(std::bind(&TcpConnection::handleClose, this));
   channel_->setErrorCallback(std::bind(&TcpConnection::handleError, this));
@@ -59,14 +59,17 @@ void TcpConnection::connectDestroyed() {
   loop_->removeChannel(channel_.get());
 }
 
-void TcpConnection::handleRead() {
-  char buf[65536];
-  ssize_t n = ::read(socket_->fd(), buf, sizeof buf);
+void TcpConnection::handleRead(Timestamp receiveTime) {
+  int savedErrno = 0;
+  // 读取数据到缓冲区中
+  ssize_t n = inputBuffer_.readFd(channel_->fd(), &savedErrno);
   if(n > 0) { // 读取成功，调用可读用户回调
-    messageCallback_(shared_from_this(), buf, n);
+    messageCallback_(shared_from_this(), &inputBuffer_, receiveTime);
   } else if (n == 0) { // 客户端关闭连接，服务端被动关闭连接
     handleClose();
   } else { // 读取错误
+    errno = savedErrno;
+    LOG_SYSERR << "TcpConnection::handleRead";
     handleError();
   }
 }

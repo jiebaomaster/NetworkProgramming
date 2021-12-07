@@ -1,8 +1,10 @@
-#include <unistd.h>
 #include <stdio.h>
+#include <unistd.h>
 
-#include "../reactor/TcpServer.h"
+#include "../base/datetime/Timestamp.h"
+#include "../reactor/Buffer.h"
 #include "../reactor/EventLoop.h"
+#include "../reactor/TcpServer.h"
 
 using namespace jmuduo;
 
@@ -11,14 +13,17 @@ void onConnection(const TcpConnectionPtr& conn) {
     printf("onConnection(): new connection [%s] from %s\n",
            conn->getName().c_str(), conn->getPeerAddr().toHostPort().c_str());
   } else {
-    printf("onConnection(): connection [%s] is down\n", conn->getName().c_str());
+    printf("onConnection(): connection [%s] is down\n",
+           conn->getName().c_str());
   }
 }
 
-void onMessage(const TcpConnectionPtr& conn, const char* data,
-               ssize_t len) {
-  printf("onMessage(): received %zd bytes from connection [%s]\n", len,
-         conn->getName().c_str());
+void onMessage(const TcpConnectionPtr& conn, Buffer* buf,
+               Timestamp receiveTime) {
+  printf("onMessage(): received %zd bytes from connection [%s] at %s\n",
+         buf->readableBytes(), conn->getName().c_str(),
+         receiveTime.toFormattedString().c_str());
+  printf("onMessage(): [%s]\n", buf->retrieveAsString().c_str());
 }
 
 int main() {

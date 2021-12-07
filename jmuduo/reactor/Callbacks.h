@@ -4,16 +4,18 @@
 #include <functional>
 #include <memory>
 
-#include "datetime/Timestamp.h"
+#include "../base/datetime/Timestamp.h"
 
 namespace jmuduo {
+
+class Buffer;
+class TcpConnection;
 
 /* 所有客户可能会用到的回调函数形式定义 */
 
 // 定时器回调函数
 using TimerCallback = std::function<void()>;
 
-class TcpConnection;
 using TcpConnectionPtr = std::shared_ptr<TcpConnection>;
 
 /**
@@ -24,11 +26,11 @@ using ConnectionCallback = std::function<void(const TcpConnectionPtr&)>;
 /**
  * @brief 传递给 TcpServer，在 TCP socket 有消息可读时回调
  * @param TcpConnectionPtr 指向可读的 TCP 连接
- * @param data 读到的消息
- * @param len 消息长度
+ * @param buf 读到的消息
+ * @param receiveTime 事件发生的时间，即 poll(2) 返回的时间
  */
 using MessageCallback =
-    std::function<void(const TcpConnectionPtr&, const char* data, ssize_t len)>;
+    std::function<void(const TcpConnectionPtr&, Buffer* buf, Timestamp receiveTime)>;
 
 /**
  * @brief 传递给 TcpServer，在 TCP socket 被关闭时调用

@@ -29,7 +29,7 @@ void Channel::update() {
   loop_->updateChannel(this);
 }
 
-void Channel::handleEvent() {
+void Channel::handleEvent(Timestamp receiveTime) {
   eventHandling_ = true;
   if (revents_ & POLLNVAL) {
     LOG_WARN << "Channel::handle_event() POLLNVAL";
@@ -46,7 +46,7 @@ void Channel::handleEvent() {
 
   // 有可读事件，调用可读处理
   if (revents_ & (POLLIN | POLLPRI | POLLRDHUP))
-    if (readCallback_) readCallback_();
+    if (readCallback_) readCallback_(receiveTime);
 
   // 有可写事件，调用可写处理
   if (revents_ & POLLOUT)
