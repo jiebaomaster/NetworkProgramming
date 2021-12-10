@@ -41,3 +41,7 @@ export JMUDUO_LOG_TRACE=
 # 恢复默认的 DEBUG
 unset JMUDUO_LOG_TRACE
 ```
+
+### TODO
+
+1. bind 的参数绑定优化，参数复制开销

@@ -60,6 +60,11 @@ class Channel : noncopyable {
     events_ = kNoneEvent;
     update();
   }
+  // 是否监听了可写事件，
+  // 由于 muduo 采用 level trigger，只有在有数据需要写入时才监听可写事件
+  bool isWriting() const {
+    return events_ & kWriteEvent;
+  }
 
   int index() { return index_; }
   void set_index(int idx) { index_ = idx; }

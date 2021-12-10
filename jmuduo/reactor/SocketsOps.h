@@ -32,7 +32,10 @@ void bindOrDie(int sockfd, const struct sockaddr_in& addr);
 void listenOrDie(int sockfd);
 // 接受 sockfd 上的连接，返回一个代表新连接的 socket，新 socket 的远端地址为 addr
 int accept(int sockfd, struct sockaddr_in* addr);
+// 关闭 socket 连接
 void close(int sockfd);
+// 关闭 socket 连接的写入端，此时 socket 只能读出不能写入
+void shutdownWrite(int sockfd);
 
 /* 地址转换 */
 

@@ -32,6 +32,9 @@ class Socket : noncopyable {
    */
   int accept(InetAddress* peeraddr);
 
+  // 关闭 socket 的写入端
+  void shutdownWrite();
+
   // 设置是否复用本地地址 SO_REUSEADDR
   void setReuseAddr(bool on);
 

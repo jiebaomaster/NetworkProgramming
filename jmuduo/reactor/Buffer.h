@@ -150,6 +150,7 @@ class Buffer : copyable {
      */
     if(writableBytes() + prependableBytes() < len + kCheapPrepend) {
       // 不够大，需要扩容
+      // TODO vector.resize 扩容出来的空间会被初始化为 0，这种初始化是多余的
       buffer_.resize(writerIndex_ + len);
     } else { // 足够大，将已有数据向前移动，腾出空间
       assert(kCheapPrepend < readerIndex_);

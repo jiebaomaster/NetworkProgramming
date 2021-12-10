@@ -32,6 +32,10 @@ int Socket::accept(InetAddress *peeraddr) {
   return connfd;
 }
 
+void Socket::shutdownWrite() {
+  sockets::shutdownWrite(sockfd_);
+}
+
 void Socket::setReuseAddr(bool on) {
   int optval = on ? 1 : 0;
   int ret = ::setsockopt(sockfd_, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof optval);
