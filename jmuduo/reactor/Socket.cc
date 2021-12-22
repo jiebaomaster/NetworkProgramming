@@ -38,8 +38,18 @@ void Socket::shutdownWrite() {
 
 void Socket::setReuseAddr(bool on) {
   int optval = on ? 1 : 0;
-  int ret = ::setsockopt(sockfd_, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof optval);
-  if(ret < 0) {
+  int ret =
+      ::setsockopt(sockfd_, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof optval);
+  if (ret < 0) {
     LOG_SYSFATAL << "setsockopt:SO_REUSEADDR";
+  }
+}
+
+void Socket::setTcpNoDelay(bool on) {
+  int optval = on ? 1 : 0;
+  int ret =
+      ::setsockopt(sockfd_, IPPROTO_TCP, TCP_NODELAY, &optval, sizeof optval);
+  if (ret < 0) {
+    LOG_SYSFATAL << "setsockopt:TCP_NODELAY";
   }
 }

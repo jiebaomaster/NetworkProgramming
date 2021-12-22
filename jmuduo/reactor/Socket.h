@@ -38,6 +38,9 @@ class Socket : noncopyable {
   // 设置是否复用本地地址 SO_REUSEADDR
   void setReuseAddr(bool on);
 
+  // 设置 TCP_NODELAY（Nagle 算法）
+  void setTcpNoDelay(bool on);
+
  private:
   const int sockfd_;  // listening socket
 };

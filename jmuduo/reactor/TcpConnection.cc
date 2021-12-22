@@ -68,6 +68,9 @@ void TcpConnection::sendInLoop(const std::string& message) {
       // 数据没有完全写入
       if (static_cast<size_t>(nwrote) < message.size()) {
         LOG_TRACE << "I am going to write more data";
+      } else if (writeCompleteCallback_) { // 数据全部写出了，执行回调
+        loop_->queueInLoop(
+            std::bind(writeCompleteCallback_, shared_from_this()));
       }
     } else {  // 写入失败，没有直接退出，会在下面加入输出缓冲区，再给一次机会
       nwrote = 0;
@@ -79,6 +82,14 @@ void TcpConnection::sendInLoop(const std::string& message) {
   assert(nwrote >= 0);
   // 数据没有完全写入 或者 一开始输出缓冲区中就有数据
   if (static_cast<size_t>(nwrote) < message.size()) {
+    size_t remaining = message.size() - nwrote;
+    size_t oldLen = outputBuffer_.readableBytes();
+    if (remaining + oldLen >= highWaterMark_ &&  // 发送缓冲区大小大于高水位
+        oldLen < highWaterMark_ &&               // 只在上升沿触发一次
+        highWaterMarkCallback_) {
+      loop_->queueInLoop(std::bind(highWaterMarkCallback_, shared_from_this(),
+                                   oldLen + remaining));
+    }
     // 将数据放入输出缓冲区
     outputBuffer_.append(message.data() + nwrote, message.size() - nwrote);
     if (!channel_->isWriting())  // 开始关注可写事件
@@ -103,6 +114,10 @@ void TcpConnection::shutdownInLoop() {
   if (!channel_->isWriting()) {
     socket_->shutdownWrite();
   }
+}
+
+void TcpConnection::setTcpNoDelay(bool on) {
+  socket_->setTcpNoDelay(on);
 }
 
 void TcpConnection::connectEstablished() {
@@ -157,6 +172,10 @@ void TcpConnection::handleWrite() {
       if (outputBuffer_.readableBytes() == 0) { // 缓冲区数据全部被写出了
         // 立即不再监听可写事件，防止 busy loop
         channel_->disableWriting();
+        // 缓冲区数据全部被写出了，执行回调
+        if (writeCompleteCallback_) {
+          loop_->queueInLoop(std::bind(writeCompleteCallback_, shared_from_this()));
+        }
         // 主动关闭 TCP 连接时因为还有数据要写出而关闭失败的，在这里进行关闭
         if (state_ == kDisconnecting) {
           shutdownInLoop();

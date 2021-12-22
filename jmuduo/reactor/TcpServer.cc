@@ -55,6 +55,7 @@ void TcpServer::newConnection(int sockfd, const InetAddress& peerAddr) {
   // 设置用户回调
   conn->setConnectionCallback(connectionCallback_);
   conn->setMessageCallback(messageCallback_);
+  conn->setWriteCompleteCallback(writeCompleteCallback_);
   conn->setCloseCallback(bind(&TcpServer::removeConnection, this, _1));
   conn->connectEstablished();
 }

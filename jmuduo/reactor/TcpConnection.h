@@ -65,12 +65,22 @@ class TcpConnection : noncopyable, public std::enable_shared_from_this<TcpConnec
   void send(const std::string& message);
   // 主动断开 TCP 连接，实际为关闭写端口，线程安全的，可在别的线程调用
   void shutdown();
+  // 设置禁用 Nagle 算法，避免连续发包出现延迟，适用于低延迟网络服务
+  void setTcpNoDelay(bool on);
 
   // 设置用户回调
   void setConnectionCallback(const ConnectionCallback& cb) {
     connectionCallback_ = cb;
   }
   void setMessageCallback(const MessageCallback& cb) { messageCallback_ = cb; }
+  void setWriteCompleteCallback(const WriteCompleteCallback& cb) {
+    writeCompleteCallback_ = cb;
+  }
+  void setHighWaterMarkCallback(const HighWaterMarkCallback& cb, size_t highWaterMark) {
+    highWaterMarkCallback_ = cb;
+    highWaterMark_ = highWaterMark;
+  }
+
   /// Internal use only.
   void setCloseCallback(const CloseCallback& cb)
   { closeCallback_ = cb; }
@@ -108,8 +118,11 @@ class TcpConnection : noncopyable, public std::enable_shared_from_this<TcpConnec
   InetAddress peerAddr_; // 远端地址
   ConnectionCallback connectionCallback_; // 建立该连接时和关闭该连接时的用户回调
   MessageCallback messageCallback_; // 该连接有消息可读时的用户回调
+  WriteCompleteCallback writeCompleteCallback_; // 每次发送缓冲区被清空时回调
+  HighWaterMarkCallback
+      highWaterMarkCallback_;  // 每次发生缓冲区的长度超过用户指定大小时回调（只在上升沿触发一次）
   CloseCallback closeCallback_; // 该连接被关闭时的回调，内部使用
-  
+  size_t highWaterMark_; // 发送缓冲区的高水位标志，超过时调用相应回调，单位为字节
   /**
    * 虽然这两个缓冲区都没有用锁保护，但他们都是线程安全的
    * 1. 对于 input buffer，onMessage() 回调始终发生在该 TcpConnection 所属的 IO

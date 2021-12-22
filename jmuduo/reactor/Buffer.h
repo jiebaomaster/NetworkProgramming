@@ -59,7 +59,7 @@ class Buffer : copyable {
   // string str(retrieve(readableBytes()), readableBytes());
   // 表达式中两个函数的执行顺序是不确定的
   void retrieve(size_t len) {
-    assert(len < readableBytes());
+    assert(len <= readableBytes());
     readerIndex_ += len;
   }
 

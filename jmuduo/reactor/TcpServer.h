@@ -29,6 +29,10 @@ class TcpServer : noncopyable {
   }
   // 设置用户回调，有某个连接的消息可读性时
   void setMessageCallback(const MessageCallback& cb) { messageCallback_ = cb; }
+  // 设置用户回调，每次发送缓冲区被清空时调用
+  void setWriteCompleteCallback(const WriteCompleteCallback& cb) {
+    writeCompleteCallback_ = cb;
+  }
 
  private:
   // 该函数本身不是线程安全的，但是只会事件循环中运行
@@ -46,6 +50,9 @@ class TcpServer : noncopyable {
       connectionCallback_;  // 用户回调，供 TcpConnection 在每次有连接建立时调用
   MessageCallback
       messageCallback_;  // 用户回调，供 TcpConnection 在每次有消息可读时调用
+  WriteCompleteCallback writeCompleteCallback_;  // 用户回调，供 TcpConnection
+                                                 // 在每次发送缓冲区被清空时调用
+
   bool started_;                     // 服务是否启动
   int nextConnId_;  // 下一个连接 socket 的编号，单调递增
   ConnectionMap connections_;  // 所有 TCP 连接，连接名称 => TcpConnection

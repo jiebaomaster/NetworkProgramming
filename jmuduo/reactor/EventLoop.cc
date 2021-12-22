@@ -7,6 +7,7 @@
 #include <assert.h>
 #include <sys/eventfd.h>
 #include <unistd.h>
+#include <signal.h>
 
 using namespace jmuduo;
 
@@ -29,6 +30,15 @@ static int createEventfd() {
   }
   return eventfd;
 }
+
+class IgnoreSigPipe {
+ public:
+  IgnoreSigPipe() { ::signal(SIGPIPE, SIG_IGN); }
+};
+// 实例化了一个全局对象，用来忽略 SIGPIPE 信号，
+// 在服务进程繁忙时，没有及时处理对方断开连接的事件，有可能出现在连接断开之后继续发送数据，
+// 此时进程会收到 SIGPIPE 信号，其默认行为会使服务进程退出
+IgnoreSigPipe initObj;
 
 EventLoop::EventLoop() 
   : looping_(false), 
