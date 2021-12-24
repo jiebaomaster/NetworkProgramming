@@ -14,27 +14,30 @@ int sleepSeconds = 0;
 
 void onConnection(const TcpConnectionPtr& conn) {
   if (conn->connected()) {
-    printf("onConnection(): new connection [%s] from %s\n",
-           conn->getName().c_str(), conn->getPeerAddr().toHostPort().c_str());
+    printf("onConnection(): tid=%d new connection [%s] from %s\n",
+           CurrentThread::tid(), conn->getName().c_str(),
+           conn->getPeerAddr().toHostPort().c_str());
     // 建立连接后，睡眠一段时间再发送数据，如果在睡眠时客户端连接断开了，
     // 会在发生数据时收到 SIGPIPE，需要忽略此信号，否则服务器进程会退出
     if (sleepSeconds > 0) {
       ::sleep(sleepSeconds);
     }
+    if (!message1.empty())
+      conn->send(message1);
+    if (!message2.empty())
+      conn->send(message2);
 
-    conn->send(message1);
-    conn->send(message2);
     conn->shutdown();
   } else {
-    printf("onConnection(): connection [%s] is down\n",
-           conn->getName().c_str());
+    printf("onConnection(): tid=%d connection [%s] is down\n",
+           CurrentThread::tid(), conn->getName().c_str());
   }
 }
 
 void onMessage(const TcpConnectionPtr& conn, Buffer* buf,
                Timestamp receiveTime) {
-  printf("onMessage(): received %zd bytes from connection [%s] at %s\n",
-         buf->readableBytes(), conn->getName().c_str(),
+  printf("onMessage(): tid=%d received %zd bytes from connection [%s] at %s\n",
+         CurrentThread::tid(), buf->readableBytes(), conn->getName().c_str(),
          receiveTime.toFormattedString().c_str());
   printf("onMessage(): [%s]\n", buf->retrieveAsString().c_str());
 }
@@ -54,6 +57,7 @@ int main(int argc, char* argv[]) {
     sleepSeconds = atoi(argv[3]);
   }
 
+
   message1.resize(len1);
   message2.resize(len2);
   std::fill(message1.begin(), message1.end(), 'A');
@@ -66,6 +70,9 @@ int main(int argc, char* argv[]) {
   // 回调普通函数，不需要处理 this，所以不用 bind
   server.setConnectionCallback(onConnection);
   server.setMessageCallback(onMessage);
+  if (argc > 4) {
+    server.setThreadNum(atoi(argv[4]));
+  }
   server.start();
 
   loop.loop();

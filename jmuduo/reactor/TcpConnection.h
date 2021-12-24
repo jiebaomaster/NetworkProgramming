@@ -29,7 +29,8 @@ class Socket;
  *     -> TcpConnection::handleClose 可读事件是连接关闭，调用关闭事件处理函数
  *       -> closeCallback_(shared_from_this())
  *          TcpServer::removeConnection 从 server 中删除该连接
- *            -> loop_->queueInLoop(bind(&TcpConnection::connectDestroyed, conn));
+ *            -> loop->ruTcpServer::removeConnectionInLoop
+ *            -> ioLoop->queueInLoop(bind(&TcpConnection::connectDestroyed, conn));
  * 2. 第二轮事件循环，从 Poller.pollfds_ 中删除信道对应的 pollfd
  * TcpConnection::connectDestroyed
  *    -> EventLoop::removeChannel
@@ -85,6 +86,14 @@ class TcpConnection : noncopyable, public std::enable_shared_from_this<TcpConnec
   void setCloseCallback(const CloseCallback& cb)
   { closeCallback_ = cb; }
 
+  /**
+   * TcpConnection 是个跨线程对象，其由 TcpServer 创建并索引（connections_），
+   * 却运行在不同与 TcpServer（多线程模式）的 IO 线程。但是 muduo 并没有使用锁保护
+   * TcpServer 和 TcpConnection，而是保证 TcpConnection 的操作总在 IO 线程运行，
+   * TcpServer 的操作总在其所在线程运行，来提供线程安全性
+   * 
+   * 以下为在连接建立和断开时需要对 TcpConnection 进行的操作，均需保证在 IO 线程执行
+   */
   // 连接建立完成后被 TcpServer 调用，此时 TcpConnection 的用户回调已设置
   // 应该只被调用一次
   void connectEstablished();
@@ -109,7 +118,7 @@ class TcpConnection : noncopyable, public std::enable_shared_from_this<TcpConnec
   void sendInLoop(const std::string& message);
   void shutdownInLoop();
 
-  EventLoop* loop_;
+  EventLoop* loop_; // 连接所属的事件循环
   std::string name_; // 连接名称，格式 ip:port#connIndex
   StateE state_; // FIXME: use atomic variable 该连接的状态
   const std::unique_ptr<Socket> socket_; // TCP socket

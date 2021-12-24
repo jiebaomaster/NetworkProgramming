@@ -121,6 +121,7 @@ void TcpConnection::setTcpNoDelay(bool on) {
 }
 
 void TcpConnection::connectEstablished() {
+  // 应该在 TcpConnection 所处的 ioLoop 中处理新连接的建立
   loop_->assertInLoopThread();
   assert(state_ == kConnecting);
   setState(kConnected);
